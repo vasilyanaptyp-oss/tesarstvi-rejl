@@ -26,6 +26,7 @@ h1,h2,h3,p,figure,blockquote{margin:0}
 .skip{position:absolute;left:-999px;top:8px;background:var(--oak-2);color:var(--char);padding:10px 16px;z-index:200;border-radius:var(--r);font-weight:600}
 .skip:focus{left:8px}
 :focus-visible{outline:3px solid var(--oak-2);outline-offset:3px}
+[tabindex="-1"]:focus{outline:none}
 
 h1,h2,h3{font-family:var(--head);font-weight:700;line-height:1.02;letter-spacing:.005em}
 
@@ -135,6 +136,9 @@ h1,h2,h3{font-family:var(--head);font-weight:700;line-height:1.02;letter-spacing
 .review::after{content:"\201D";position:absolute;top:6px;right:22px;font-family:Georgia,"Times New Roman",serif;font-size:96px;line-height:1;color:var(--oak-2);opacity:.45;pointer-events:none}
 .review figcaption{display:flex;flex-direction:column;font-size:14.5px;color:var(--muted)}
 .review figcaption strong{color:var(--ink);font-size:16px}
+.reviews-src{margin-top:20px;font-size:15px}
+.reviews-src a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--oak-d);text-decoration-thickness:2px;text-underline-offset:4px}
+.reviews-src a:hover{color:var(--oak-d)}
 
 /* steps */
 .steps-sec{background:var(--char-2);color:#fff;position:relative;overflow:hidden}
@@ -169,7 +173,7 @@ h1,h2,h3{font-family:var(--head);font-weight:700;line-height:1.02;letter-spacing
 .form textarea{resize:vertical;min-height:110px}
 .form input::placeholder,.form textarea::placeholder{color:rgba(255,255,255,.4)}
 .form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--oak-2);box-shadow:0 0 0 3px rgba(210,154,78,.3)}
-.form input.bad{border-color:#e5806a}
+.form input.bad,.form input[aria-invalid="true"]{border-color:#e5806a;box-shadow:0 0 0 1px #e5806a}
 .form-err{color:#ffb4a4;font-size:15px}
 .form-note{font-size:13.5px;color:rgba(255,255,255,.55);line-height:1.5}
 .form .btn{width:100%}

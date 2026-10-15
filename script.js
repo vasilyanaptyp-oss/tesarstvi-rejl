@@ -25,6 +25,37 @@
     if (window.innerWidth > 960) setMenu(false);
   });
 
+  /* in-page links: the same short scroll on every page length (native smooth scroll takes 1-2 s on a long phone page) */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    var id = a.getAttribute('href').slice(1);
+    var target = id && document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    var root = document.documentElement;
+    var pad = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0;
+    var from = window.scrollY;
+    var to = Math.max(0, Math.min(target.getBoundingClientRect().top + from - pad, root.scrollHeight - window.innerHeight));
+    var done = function () {
+      root.style.scrollBehavior = '';
+      if (history.pushState) history.pushState(null, '', '#' + id);
+      if (!target.hasAttribute('tabindex') && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    };
+    root.style.scrollBehavior = 'auto';
+    if (reduce || Math.abs(to - from) < 2) { window.scrollTo(0, to); done(); return; }
+    var t0 = null, dur = 450;
+    (function step(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / dur);
+      var ease = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      window.scrollTo(0, from + (to - from) * ease);
+      if (k < 1) requestAnimationFrame(step); else done();
+    })(performance.now());
+  });
+
   /* call button on phones appears after the hero */
   var fab = document.querySelector('.call-fab');
   var hero = document.querySelector('.hero');
@@ -95,16 +126,34 @@
   /* inquiry form -> prefilled mailto */
   var form = document.getElementById('inquiry');
   var err = document.getElementById('formErr');
+  var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@.]{2,}$/;
+  function mark(field, bad) {
+    field.classList.toggle('bad', bad);
+    if (bad) field.setAttribute('aria-invalid', 'true');
+    else field.removeAttribute('aria-invalid');
+  }
+  ['name', 'phone', 'email'].forEach(function (n) {
+    form.elements[n].addEventListener('input', function () {
+      if (this.getAttribute('aria-invalid') === 'true') mark(this, false);
+    });
+  });
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var f = form.elements;
     var name = f.name.value.trim();
     var phone = f.phone.value.trim();
-    f.name.classList.toggle('bad', !name);
-    f.phone.classList.toggle('bad', !phone);
-    if (!name || !phone) {
+    var email = f.email.value.trim();
+    var emailBad = email !== '' && (!f.email.validity.valid || !emailRe.test(email));
+    mark(f.name, !name);
+    mark(f.phone, !phone);
+    mark(f.email, emailBad);
+    if (!name || !phone || emailBad) {
+      var msg = [];
+      if (!name || !phone) msg.push('Vyplňte prosím jméno a telefon.');
+      if (emailBad) msg.push('Zadejte platnou e-mailovou adresu.');
+      err.textContent = msg.join(' ');
       err.hidden = false;
-      (name ? f.phone : f.name).focus();
+      (!name ? f.name : !phone ? f.phone : f.email).focus();
       return;
     }
     err.hidden = true;
@@ -118,7 +167,7 @@
       '',
       'Jméno: ' + name,
       'Telefon: ' + phone,
-      f.email.value.trim() ? 'E-mail: ' + f.email.value.trim() : '',
+      email ? 'E-mail: ' + email : '',
       '',
       'Děkuji a jsem s pozdravem'
     ].filter(function (l, i, a) { return !(l === '' && a[i - 1] === ''); });
